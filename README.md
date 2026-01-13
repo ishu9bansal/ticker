@@ -6,6 +6,8 @@ A simple FastAPI backend project for learning Python web development, dependency
 
 - Simple "Hello World" REST API endpoint
 - Health check endpoint for monitoring
+- **Organized multi-file project structure** with proper Python packaging
+- **Clear import patterns** that work both locally and in production
 - Modern Python dependency management with `uv`
 - Ready for deployment on Render
 
@@ -112,25 +114,121 @@ uv remove <package-name>
 
 ## 🔍 Project Structure
 
+This project follows a well-organized structure that scales as your application grows:
+
 ```
 ticker/
-├── main.py              # FastAPI application with endpoints
-├── pyproject.toml       # Project metadata and dependencies
-├── .python-version      # Python version specification
-├── .gitignore          # Git ignore rules
-├── README.md           # This file
-└── .venv/              # Virtual environment (auto-created, not in git)
+├── main.py                      # Entry point - imports app from app.main
+├── app/                         # Main application package
+│   ├── __init__.py             # Package initialization
+│   ├── main.py                 # FastAPI app instance and router configuration
+│   ├── api/                    # API route handlers (organized by domain)
+│   │   ├── __init__.py
+│   │   ├── health.py          # Health check endpoints
+│   │   └── ticker.py          # Ticker-related endpoints
+│   ├── models/                 # Pydantic models for data validation
+│   │   ├── __init__.py
+│   │   ├── health.py          # Health check models
+│   │   └── ticker.py          # Ticker data models
+│   └── services/               # Business logic layer
+│       ├── __init__.py
+│       └── ticker_service.py  # Ticker business logic
+├── pyproject.toml              # Project metadata and dependencies
+├── .python-version             # Python version specification
+├── .gitignore                  # Git ignore rules
+├── README.md                   # This file
+└── .venv/                      # Virtual environment (auto-created, not in git)
 ```
+
+### Why This Structure?
+
+1. **Separation of Concerns**: Routes (API), models (data), and services (logic) are separated
+2. **Scalability**: Easy to add new endpoints, models, or services
+3. **Maintainability**: Related code is grouped together
+4. **Testability**: Each module can be tested independently
+
+## 🔌 How Imports Work
+
+### Understanding Python Imports in This Project
+
+The key to making imports work both locally and in production is to:
+1. **Always run from the project root** (where `main.py` is located)
+2. **Use absolute imports** from the `app` package
+
+### Import Patterns
+
+**✅ Correct - Absolute imports (recommended):**
+```python
+# In any file under app/
+from app.models.ticker import TickerResponse
+from app.services.ticker_service import TickerService
+from app.api import health, ticker
+```
+
+**❌ Incorrect - Relative imports (avoid for this structure):**
+```python
+# Don't use these
+from ..models.ticker import TickerResponse  # Can cause issues
+from .ticker_service import TickerService    # Can fail in production
+```
+
+### Entry Point Explained
+
+**`main.py`** (in project root) is the entry point:
+```python
+from app.main import app  # Import the FastAPI app instance
+```
+
+**`app/main.py`** contains the actual FastAPI app:
+```python
+from fastapi import FastAPI
+from app.api import health, ticker  # Absolute imports
+
+app = FastAPI(title="Ticker API", version="0.1.0")
+app.include_router(health.router, tags=["health"])
+app.include_router(ticker.router, tags=["ticker"])
+```
+
+### Why This Works
+
+When you run `uvicorn main:app`:
+1. Python looks for `main.py` in the current directory
+2. It imports the `app` variable from that file
+3. The `app` variable is imported from `app.main`
+4. All imports in `app/main.py` use `app.` prefix, which Python can resolve because the project root is in `sys.path`
+
+### Common Import Issues and Solutions
+
+**Problem**: `ModuleNotFoundError: No module named 'app'`
+
+**Solution**: Always run commands from the project root (where `main.py` is):
+```bash
+# ✅ Correct - from project root
+cd /path/to/ticker
+uv run uvicorn main:app --reload
+
+# ❌ Wrong - from inside app/
+cd /path/to/ticker/app
+uv run uvicorn main:app --reload  # This will fail!
+```
+
+**Problem**: Imports work locally but fail in production
+
+**Solution**: 
+- Use absolute imports (`from app.xxx import yyy`)
+- Ensure your start command runs from the project root
+- The deployment command should be: `uv run uvicorn main:app --host 0.0.0.0 --port $PORT`
 
 ## 🌐 API Endpoints
 
 ### GET /
-Returns a simple "Hello World" message.
+Returns a simple "Hello World" message with version.
 
 **Response:**
 ```json
 {
-  "message": "Hello World"
+  "message": "Hello World",
+  "version": "0.1.0"
 }
 ```
 
@@ -143,6 +241,78 @@ Health check endpoint for monitoring service status.
   "status": "healthy"
 }
 ```
+
+### GET /ticker
+Example ticker endpoint demonstrating service layer pattern.
+
+**Response:**
+```json
+{
+  "symbol": "DEMO",
+  "price": 100.50,
+  "message": "This is example ticker data"
+}
+```
+
+**Interactive Documentation:**
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+## 📝 Adding New Endpoints
+
+To add a new endpoint to your application:
+
+1. **Create a model** (if needed) in `app/models/`:
+```python
+# app/models/user.py
+from pydantic import BaseModel
+
+class User(BaseModel):
+    id: int
+    name: str
+    email: str
+```
+
+2. **Create a service** (if needed) in `app/services/`:
+```python
+# app/services/user_service.py
+from app.models.user import User
+
+class UserService:
+    def get_user(self, user_id: int) -> User:
+        # Your business logic here
+        return User(id=user_id, name="John Doe", email="john@example.com")
+```
+
+3. **Create an API router** in `app/api/`:
+```python
+# app/api/users.py
+from fastapi import APIRouter
+from app.models.user import User
+from app.services.user_service import UserService
+
+router = APIRouter()
+user_service = UserService()
+
+@router.get("/users/{user_id}", response_model=User)
+def get_user(user_id: int):
+    return user_service.get_user(user_id)
+```
+
+4. **Register the router** in `app/main.py`:
+```python
+from app.api import health, ticker, users  # Add your new module
+
+app.include_router(users.router, tags=["users"])  # Register the router
+```
+
+5. **Test it**:
+```bash
+uv run uvicorn main:app --reload
+curl http://localhost:8000/users/1
+```
+
+This pattern keeps your code organized and scalable!
 
 ## 🚢 Deployment on Render
 
