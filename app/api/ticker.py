@@ -12,7 +12,7 @@ router = APIRouter()
 service = TickerService()
 
 
-@router.get("/instruments", response_model=TickerResponse)
+@router.get("/instruments")
 def instruments():
     try:
         return service.instruments()
