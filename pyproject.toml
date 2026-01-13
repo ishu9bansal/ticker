@@ -1,0 +1,10 @@
+[project]
+name = "ticker"
+version = "0.1.0"
+description = "A simple FastAPI backend project for learning deployment"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.128.0",
+    "uvicorn>=0.40.0",
+]
