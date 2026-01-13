@@ -4,40 +4,35 @@ Ticker-related endpoints.
 Business logic endpoints for ticker functionality.
 """
 
-from fastapi import APIRouter
-from app.models.ticker import TickerResponse
+from fastapi import APIRouter, Request
+from app.models.ticker import HistoryResponse, TickerResponse
 from app.services.ticker_service import TickerService
 
 router = APIRouter()
-ticker_service = TickerService()
+service = TickerService()
 
 
 @router.get("/instruments", response_model=TickerResponse)
 def instruments():
-    """
-    Get current ticker information.
-    
-    Returns:
-        TickerResponse: Current ticker data
-    """
-    return ticker_service.get_ticker_data()
+    try:
+        return service.instruments()
+    except Exception as e:
+        return {"error": str(e)}
 
-@router.get("/quote", response_model=TickerResponse)
-def quote():
-    """
-    Get current ticker information.
-    
-    Returns:
-        TickerResponse: Current ticker data
-    """
-    return ticker_service.get_ticker_data()
+@router.get("/quote")
+def quote(req: Request):
+    # parse query params
+    underlying = req.query_params.get("underlying")
+    try:
+        return service.quote(underlying)
+    except Exception as e:
+        return {"error": str(e)}
 
-@router.get("/history", response_model=TickerResponse)
-def history() -> TickerResponse:
-    """
-    Get current ticker information.
-    
-    Returns:
-        TickerResponse: Current ticker data
-    """
-    return ticker_service.get_ticker_data()
+@router.get("/history")
+def history(req: Request):
+    underlying = req.query_params.get("underlying")
+    from_date = req.query_params.get("from")
+    try:
+        return service.history(underlying, from_date)
+    except Exception as e:
+        return {"error": str(e)}
