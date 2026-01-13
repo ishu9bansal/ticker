@@ -17,7 +17,7 @@ app = FastAPI(
 
 # Include routers from different modules
 app.include_router(health.router, tags=["health"])
-app.include_router(ticker.router, tags=["ticker"])
+app.include_router(ticker.router, prefix='ticker', tags=["ticker"])
 
 
 @app.get("/")
