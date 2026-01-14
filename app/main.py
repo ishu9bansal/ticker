@@ -5,10 +5,10 @@ This module creates and configures the FastAPI application instance.
 All routes from different routers are included here.
 """
 
-import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import health, ticker
+from app.constants.index import ALLOWED_ORIGINS
 
 # Create FastAPI application instance
 app = FastAPI(
@@ -18,13 +18,9 @@ app = FastAPI(
 )
 
 # Configure CORS - Get allowed origins from environment variable
-# FRONTEND_URLS should be a comma-separated list of URLs
-frontend_urls = os.getenv("FRONTEND_URLS", "*")
-allowed_origins = [url.strip() for url in frontend_urls.split(",")] if frontend_urls != "*" else ["*"]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
