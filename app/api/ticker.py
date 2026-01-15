@@ -4,13 +4,12 @@ Ticker-related endpoints.
 Business logic endpoints for ticker functionality.
 """
 
-from fastapi import APIRouter, Request
-from app.models.ticker import HistoryResponse, TickerResponse
+from fastapi import APIRouter, Depends, Request
+from app.api.auth import authenticate_request
 from app.services.ticker_service import TickerService
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(authenticate_request)])
 service = TickerService()
-
 
 @router.get("/instruments")
 def instruments():
