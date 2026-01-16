@@ -62,7 +62,7 @@ class Broker:
                 self._instruments[underlying][optionType][expiry] = []
             self._instruments[underlying][optionType][expiry].append(ins)
     
-    def findOption(self, expiry: datetime.date, strike: float, option_type: OptionType, underlying: Underlying) -> str | None:
+    def findOptionKey(self, expiry: str, strike: float, option_type: OptionType, underlying: Underlying) -> str | None:
         instruments = self._instruments.get(underlying, {}).get(option_type, {}).get(str(expiry), [])
         opts = []
         for ins in instruments:
@@ -71,6 +71,20 @@ class Broker:
         if not opts:
             return None
         return instrumentKey(opts[0])
+
+    def findOptions(self, expiry: str, option_type: OptionType, underlying: Underlying) -> list[Any]:
+        return self._instruments.get(underlying, {}).get(option_type, {}).get(str(expiry), [])
+    
+    def findEarliestExpiry(self, underlying: Underlying) -> str | None:
+        now = str(datetime.datetime.now())
+        expiries: set[str] = set()
+        for option_type in self._instruments.get(underlying, {}):
+            for expiry_str in self._instruments[underlying][option_type]:
+                if expiry_str >= now:
+                    expiries.add(expiry_str)
+        if not expiries:
+            return None
+        return min(expiries)
     
     def findStock(self, underlying: Underlying) -> str:
         return INSTRUMENT_MAP[underlying]
