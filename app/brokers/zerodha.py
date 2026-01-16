@@ -77,13 +77,13 @@ class Broker:
     
     def instruments(self):
         # convert nested _instruments to flat array
-        return {
-            ku.value: {
-                ko.value: vo
-                for ko, vo in vu.items()
-            }
-            for ku, vu in self._instruments.items()
-        }
+        return [
+            ins
+            for opt_types in self._instruments.values()
+            for expiries in opt_types.values()
+            for ins_list in expiries.values()
+            for ins in ins_list
+        ]
     
     def profile(self):
         return self.kite.profile()
