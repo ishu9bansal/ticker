@@ -17,7 +17,7 @@ def instruments():
         return service.instruments()
     except Exception as e:
         return {"error": str(e)}
-    
+
 @router.get("/user")
 def user():
     try:
@@ -31,6 +31,15 @@ def quote(req: Request):
     underlying = req.query_params.get("underlying")
     try:
         return service.quote(underlying)
+    except Exception as e:
+        return {"error": str(e)}
+
+@router.get("/straddles")
+def straddles(req: Request):
+    # parse query params
+    underlying = req.query_params.get("underlying")
+    try:
+        return service.straddles(underlying)
     except Exception as e:
         return {"error": str(e)}
 
