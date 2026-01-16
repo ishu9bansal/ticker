@@ -76,7 +76,7 @@ class Broker:
         return INSTRUMENT_MAP[underlying]
     
     def instruments(self):
-        # convert _instruments nested keys to str instead of enums
+        # convert nested _instruments to flat array
         return {
             ku.value: {
                 ko.value: vo
@@ -84,6 +84,9 @@ class Broker:
             }
             for ku, vu in self._instruments.items()
         }
+    
+    def profile(self):
+        return self.kite.profile()
         
     def quote(self, *instruments: str):
         return self.kite.quote(instruments)

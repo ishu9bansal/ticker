@@ -13,6 +13,9 @@ class TickerService:
     def __init__(self) -> None:
         self.broker = Broker()
     
+    def user(self):
+        return self.broker.profile()
+    
     def instruments(self):
         return self.broker.instruments()
     

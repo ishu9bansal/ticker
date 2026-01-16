@@ -17,6 +17,13 @@ def instruments():
         return service.instruments()
     except Exception as e:
         return {"error": str(e)}
+    
+@router.get("/user")
+def user():
+    try:
+        return service.user()
+    except Exception as e:
+        return {"error": str(e)}
 
 @router.get("/quote")
 def quote(req: Request):
