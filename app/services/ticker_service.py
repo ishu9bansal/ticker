@@ -84,7 +84,7 @@ class TickerService:
     
     def _combineQuotes(self, quotes: list[Any]):
         combined = {
-            "timestamp": quotes[0]["timestamp"],
+            "timestamp": int(quotes[0]["timestamp"].timestamp()*1000),
             "price": sum(q["last_price"] for q in quotes),
             "quotes": quotes,
         }
