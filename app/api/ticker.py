@@ -43,6 +43,16 @@ def straddles(req: Request):
     except Exception as e:
         return {"error": str(e)}
 
+@router.get("/straddleQuotes")
+def straddleQuotes(req: Request):
+    # parse query params
+    ids = req.query_params.get("ids")
+    idList = ids.split(",") if ids else []
+    try:
+        return service.straddle_quotes(idList)
+    except Exception as e:
+        return {"error": str(e)}
+
 @router.get("/history")
 def history(req: Request):
     underlying = req.query_params.get("underlying")
