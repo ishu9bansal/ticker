@@ -5,6 +5,7 @@ This module contains the business logic for ticker operations.
 """
 
 from datetime import datetime
+from typing import Any
 from app.brokers.zerodha import Broker
 from app.models.ticker import OptionType, Underlying
 
@@ -51,8 +52,10 @@ class TickerService:
         common_strikes = set(call_map.keys()).intersection(set(put_map.keys()))
         straddles = []
         for strike in common_strikes:
+            id = f'{u.value}:{expiry}:{round(strike)}'
             straddle = {
-                "underlying": underlying_str,
+                "id": id,
+                "underlying": u.value,
                 "strike": strike,
                 "expiry": expiry,
                 "call": call_map[strike],
@@ -61,4 +64,41 @@ class TickerService:
             straddles.append(straddle)
         straddles.sort(key=lambda x: x["strike"])
         return straddles
+    
+    def straddle_quotes(self, idList: list[str]):
+        instrumentKeys = {}
+        for id in idList:
+            call_key, put_key = self._straddleKeys(id)
+            if not call_key or not put_key:
+                raise ValueError(f"Could not find instruments for straddle id {id}")
+            instrumentKeys[call_key] = id
+            instrumentKeys[put_key] = id
+        
+        quotes = self.broker.quote(*instrumentKeys.keys())
+        
+        straddle_quotes = {}
+        for key, quote in quotes.items():
+            straddle_id = instrumentKeys[key]
+            if straddle_id not in straddle_quotes:
+                straddle_quotes[straddle_id] = { "quotes": [] }
+            straddle_quotes[straddle_id]["quotes"].append(quote)
+        
+        return { straddle_id: self._combineQuotes(data) for straddle_id, data in straddle_quotes.items() }
+    
+    def _combineQuotes(self, quotes: list[Any]):
+        combined = {
+            "timestamp": quotes[0]["timestamp"],
+            "price": sum(q["last_price"] for q in quotes),
+            "quotes": quotes,
+        }
+        return combined
+    
+    def _straddleKeys(self, id: str):
+        [underlying, expiry, strike_str] = id.split(':')
+        u = Underlying(underlying)
+        strike = int(strike_str)
+        call_key = self.broker.findOptionKey(expiry, strike, OptionType.CALL, u)
+        put_key = self.broker.findOptionKey(expiry, strike, OptionType.PUT, u)
+        return call_key, put_key
+    
 
