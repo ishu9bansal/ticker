@@ -76,14 +76,11 @@ class TickerService:
         
         quotes = self.broker.quote(*instrumentKeys.keys())
         
-        straddle_quotes = {}
+        straddle_quote_list: dict[str, list] = {}
         for key, quote in quotes.items():
-            straddle_id = instrumentKeys[key]
-            if straddle_id not in straddle_quotes:
-                straddle_quotes[straddle_id] = { "quotes": [] }
-            straddle_quotes[straddle_id]["quotes"].append(quote)
+            straddle_quote_list.setdefault(instrumentKeys[key], []).append(quote)
         
-        return { straddle_id: self._combineQuotes(data) for straddle_id, data in straddle_quotes.items() }
+        return { straddle_id: self._combineQuotes(quotes) for straddle_id, quotes in straddle_quote_list.items() }
     
     def _combineQuotes(self, quotes: list[Any]):
         combined = {
