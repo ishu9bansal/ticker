@@ -5,7 +5,8 @@ This module contains the business logic for ticker operations.
 """
 
 from datetime import datetime
-from app.brokers.zerodha import Broker, OptionType, Underlying
+from app.brokers.zerodha import Broker
+from app.models.ticker import OptionType, Underlying
 
 
 class TickerService:

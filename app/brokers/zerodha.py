@@ -6,19 +6,13 @@ from typing import Any
 from app.constants import USER_ACCESS_TOKEN, ZERODHA_API_KEY
 from kiteconnect import KiteConnect
 
-class Underlying(Enum):
-    NIFTY = "NIFTY"
-    SENSEX = "SENSEX"
+from app.models.ticker import OptionType, Underlying
 
 INSTRUMENT_MAP = {
     Underlying.NIFTY: "NSE:NIFTY 50",
     Underlying.SENSEX: "BSE:SENSEX",
 }
 
-class OptionType(Enum):
-    CALL = "CE"
-    PUT = "PE"
-    
 class Interval(Enum):
     MINUTE = 'minute'
     DAY = 'day'

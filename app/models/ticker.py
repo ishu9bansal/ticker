@@ -3,6 +3,7 @@ Ticker data models.
 """
 
 from datetime import datetime
+from enum import Enum
 from pydantic import BaseModel
 
 
@@ -17,3 +18,12 @@ class HistoryResponse(BaseModel):
     symbol: str
     from_time: datetime
     to_time: datetime
+
+class Underlying(Enum):
+    NIFTY = "NIFTY"
+    SENSEX = "SENSEX"
+
+class OptionType(Enum):
+    CALL = "CE"
+    PUT = "PE"
+   
