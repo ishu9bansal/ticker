@@ -66,24 +66,25 @@ class TickerService:
         return straddles
     
     def straddle_quotes(self, idList: list[str]):
-        instrumentKeys = {}
+        keys = {}
         for id in idList:
             call_key, put_key = self._straddleKeys(id)
             if not call_key or not put_key:
                 raise ValueError(f"Could not find instruments for straddle id {id}")
-            instrumentKeys[call_key] = id
-            instrumentKeys[put_key] = id
+            keys[call_key] = id
+            keys[put_key] = id
         
-        quotes = self.broker.quote(*instrumentKeys.keys())
+        quotes = self.broker.quote(*keys.keys())
         
-        straddle_quote_list: dict[str, list] = {}
+        quote_list_map: dict[str, list] = {}
         for key, quote in quotes.items():
-            straddle_quote_list.setdefault(instrumentKeys[key], []).append(quote)
+            quote_list_map.setdefault(keys[key], []).append(quote)
         
-        return { straddle_id: self._combineQuotes(quotes) for straddle_id, quotes in straddle_quote_list.items() }
+        return { id: self._combineQuotes(id, quotes) for id, quotes in quote_list_map.items() }
     
-    def _combineQuotes(self, quotes: list[Any]):
+    def _combineQuotes(self, id: str, quotes: list[Any]):
         combined = {
+            "id": id,
             "timestamp": int(quotes[0]["timestamp"].timestamp()*1000),
             "price": sum(q["last_price"] for q in quotes),
             "quotes": quotes,
