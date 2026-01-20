@@ -9,6 +9,7 @@ from typing import Any
 from app.brokers.zerodha import Broker
 from app.constants import TZONE_INDIA
 from app.models.ticker import OptionType, Underlying
+from app.utils import timer
 
 
 class TickerService:
@@ -16,18 +17,22 @@ class TickerService:
     def __init__(self) -> None:
         self.broker = Broker()
     
+    @timer
     def user(self):
         return self.broker.profile()
     
+    @timer
     def instruments(self):
         return self.broker.instruments()
     
+    @timer
     def quote(self, underlying_str: str | None):
         if not underlying_str:
             raise ValueError("Underlying parameter is required")
         u = Underlying(underlying_str)
         return self.broker.quote(self.broker.findStock(u))
     
+    @timer
     def history(self, underlying_str: str | None, from_str: str | None, to_str: str | None = None):
         if not underlying_str:
             raise ValueError("Underlying parameter is required")
@@ -39,6 +44,7 @@ class TickerService:
         stock_instrument = self.broker.findStock(u)
         return self.broker.history(stock_instrument, from_date, to_date)
 
+    @timer
     def straddles(self, underlying_str: str | None):
         if not underlying_str:
             raise ValueError("Underlying parameter is required")
@@ -66,6 +72,7 @@ class TickerService:
         straddles.sort(key=lambda x: x["strike"])
         return straddles
     
+    @timer
     def straddle_quotes(self, idList: list[str]):
         keys = {}
         for id in idList:
