@@ -57,7 +57,8 @@ def straddleQuotes(req: Request):
 def history(req: Request):
     underlying = req.query_params.get("underlying")
     from_date = req.query_params.get("from")
+    to_date = req.query_params.get("to")
     try:
-        return service.history(underlying, from_date)
+        return service.history(underlying, from_date, to_date)
     except Exception as e:
         return {"error": str(e)}
