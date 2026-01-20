@@ -31,7 +31,9 @@ class TickerService:
             raise ValueError("Underlying parameter is required")
         u = Underlying(underlying_str)
         stock = self.broker.findStock(u)
-        quote = self.broker.quote(instrumentKey(stock))
+        key = instrumentKey(stock)
+        quote_map = self.broker.quote(key)
+        quote = quote_map.get(key)
         return { u.value: self._combineQuotes(u.value, [quote]) }
     
     @timer
