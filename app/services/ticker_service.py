@@ -28,13 +28,13 @@ class TickerService:
         u = Underlying(underlying_str)
         return self.broker.quote(self.broker.findStock(u))
     
-    def history(self, underlying_str: str | None, from_str: str | None):
+    def history(self, underlying_str: str | None, from_str: str | None, to_str: str | None = None):
         if not underlying_str:
             raise ValueError("Underlying parameter is required")
         if not from_str:
             raise ValueError("From parameter is required, in datetime format YYYY-MM-DDTHH:mm:ss")
         from_date = datetime.fromisoformat(from_str)
-        to_date = datetime.now()
+        to_date = datetime.fromisoformat(to_str) if to_str else datetime.now()
         u = Underlying(underlying_str)
         stock_instrument = self.broker.findStock(u)
         return self.broker.history(stock_instrument, from_date, to_date)
