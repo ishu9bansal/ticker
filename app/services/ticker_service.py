@@ -41,8 +41,11 @@ class TickerService:
         from_date = datetime.fromisoformat(from_str)
         to_date = datetime.fromisoformat(to_str) if to_str else datetime.now()
         u = Underlying(underlying_str)
-        stock_instrument = self.broker.findStock(u)
-        return self.broker.history(299923461, from_date, to_date)
+        token_map = {
+            Underlying.NIFTY: 256265,
+            Underlying.SENSEX: 265,
+        }
+        return self.broker.history(token_map[u], from_date, to_date)
 
     @timer
     def straddles(self, underlying_str: str | None):
