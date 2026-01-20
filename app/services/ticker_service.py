@@ -46,7 +46,22 @@ class TickerService:
         to_date = datetime.fromisoformat(to_str) if to_str else datetime.now()
         u = Underlying(underlying_str)
         token = instrumentToken(self.broker.findStock(u))
-        return self.broker.history(token, from_date, to_date)
+        history = self.broker.history(token, from_date, to_date)
+        return [self._parseHistoryRecord(record) for record in history]
+    
+    def _parseHistoryRecord(self, record: dict[str, Any]) -> dict[str, Any]:
+        # TODO: create a pydantic model for this
+        tzone_aware_time: datetime = record["date"]
+        parsed = {
+            "tstring": tzone_aware_time.isoformat(),
+            "timestamp": int(tzone_aware_time.timestamp()*1000),
+            "open": float(record["open"]),
+            "high": float(record["high"]),
+            "low": float(record["low"]),
+            "close": float(record["close"]),
+            "volume": float(record["volume"]),
+        }
+        return parsed
 
     @timer
     def straddles(self, underlying_str: str | None):
@@ -95,6 +110,7 @@ class TickerService:
         return { id: self._combineQuotes(id, quotes) for id, quotes in quote_list_map.items() }
     
     def _combineQuotes(self, id: str, quotes: list[Any]):
+        # TODO: create a pydantic model for this
         naive_time: datetime = quotes[0]["timestamp"]
         tzone_aware_time = naive_time.replace(tzinfo=TZONE_INDIA)
         combined = {
