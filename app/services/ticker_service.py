@@ -7,6 +7,7 @@ This module contains the business logic for ticker operations.
 from datetime import datetime
 from typing import Any
 from app.brokers.zerodha import Broker
+from app.constants import TZONE_INDIA
 from app.models.ticker import OptionType, Underlying
 
 
@@ -83,9 +84,12 @@ class TickerService:
         return { id: self._combineQuotes(id, quotes) for id, quotes in quote_list_map.items() }
     
     def _combineQuotes(self, id: str, quotes: list[Any]):
+        naive_time: datetime = quotes[0]["timestamp"]
+        tzone_aware_time = naive_time.replace(tzinfo=TZONE_INDIA)
         combined = {
             "id": id,
-            "timestamp": int(quotes[0]["timestamp"].timestamp()*1000),
+            "tstring": tzone_aware_time.isoformat(),
+            "timestamp": int(tzone_aware_time.timestamp()*1000),
             "price": sum(q["last_price"] for q in quotes),
             "quotes": quotes,
         }

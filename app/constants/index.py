@@ -1,3 +1,4 @@
+import datetime
 import os
 
 from dotenv import load_dotenv
@@ -12,3 +13,5 @@ USER_ACCESS_TOKEN = os.getenv("USER_ACCESS_TOKEN", "---MISSING---")
 FRONTEND_URLS = os.getenv("FRONTEND_URLS", "*")
 ALLOWED_ORIGINS = [url.strip() for url in FRONTEND_URLS.split(",")] if FRONTEND_URLS != "*" else ["*"]
 CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY')
+
+TZONE_INDIA = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
