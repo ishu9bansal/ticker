@@ -99,5 +99,5 @@ class Broker:
     def quote(self, *instruments: str):
         return self.kite.quote(instruments)
     
-    def history(self, instrument: str, from_date: datetime.datetime, to_date: datetime.datetime, interval: Interval = Interval.MINUTE):
-        return self.kite.historical_data(instrument, from_date, to_date, interval.value)
+    def history(self, instrument_token: int, from_date: datetime.datetime, to_date: datetime.datetime, interval: Interval = Interval.MINUTE):
+        return self.kite.historical_data(instrument_token, from_date, to_date, interval.value)

@@ -42,7 +42,7 @@ class TickerService:
         to_date = datetime.fromisoformat(to_str) if to_str else datetime.now()
         u = Underlying(underlying_str)
         stock_instrument = self.broker.findStock(u)
-        return self.broker.history(stock_instrument, from_date, to_date)
+        return self.broker.history(299923461, from_date, to_date)
 
     @timer
     def straddles(self, underlying_str: str | None):
