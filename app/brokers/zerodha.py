@@ -3,14 +3,14 @@
 import datetime
 from enum import Enum
 from typing import Any
-from app.constants import USER_ACCESS_TOKEN, ZERODHA_API_KEY
 from kiteconnect import KiteConnect
 
+from app.constants import USER_ACCESS_TOKEN, ZERODHA_API_KEY
 from app.models.ticker import OptionType, Underlying
 
-INSTRUMENT_MAP = {
-    Underlying.NIFTY: "NSE:NIFTY 50",
-    Underlying.SENSEX: "BSE:SENSEX",
+TRADING_SYMBOL = {
+    "NIFTY 50": Underlying.NIFTY,
+    "SENSEX": Underlying.SENSEX,
 }
 
 class Interval(Enum):
@@ -23,15 +23,22 @@ class Interval(Enum):
     MINUTES30 = '30minute'
     MINUTES60 = '60minute'
 
-def instrumentKey(instrument: dict[str,str]) -> str:
+def instrumentKey(instrument: dict[str,Any] | None) -> str:
+    if not instrument:
+        return ""
     return f"{instrument['exchange']}:{instrument['tradingsymbol']}"
+
+def instrumentToken(instrument: dict[str,Any]) -> int:
+    return instrument['instrument_token']
 
 
 class Broker:
     _instruments: dict[Underlying, dict[OptionType, dict[str, list[dict[str, Any]]]]] = {}
+    _stocks: dict[Underlying, dict[str, Any]] = {}
     def __init__(self, api_key: str = ZERODHA_API_KEY, access_token: str = USER_ACCESS_TOKEN):
         self.kite = KiteConnect(api_key=api_key, access_token=access_token)
-        self._preprocessInstruments(self.kite.instruments())
+        instruments = self.kite.instruments()
+        self._preprocessInstruments(instruments)
     
     def _preprocessInstruments(self, allInstruments) -> None:
         # Filter only supported underlyings
@@ -40,11 +47,14 @@ class Broker:
         # Filter only options type instruments
         supportedTypes = {o.value for o in OptionType}
         
-        def filterFunc(ins: dict[str, str]) -> bool:
+        def filterOptions(ins: dict[str, str]) -> bool:
             return ins.get("name") in supportedUnderlyings and ins.get("instrument_type") in supportedTypes
+
+        def filterStocks(ins: dict[str, str]) -> bool:
+            return ins.get("tradingsymbol") in TRADING_SYMBOL
         
-        instruments = [ins for ins in allInstruments if filterFunc(ins)]
-        for ins in instruments:
+        option_instruments = [ins for ins in allInstruments if filterOptions(ins)]
+        for ins in option_instruments:
             underlying = Underlying(ins.get("name"))
             optionType = OptionType(ins.get("instrument_type"))
             expiry = str(ins.get("expiry"))
@@ -55,8 +65,12 @@ class Broker:
             if expiry not in self._instruments[underlying][optionType]:
                 self._instruments[underlying][optionType][expiry] = []
             self._instruments[underlying][optionType][expiry].append(ins)
+        
+        stock_instruments = [ins for ins in allInstruments if filterStocks(ins)]
+        for ins in stock_instruments:
+            self._stocks[TRADING_SYMBOL[ins.get("tradingsymbol")]] = ins
     
-    def findOptionKey(self, expiry: str, strike: float, option_type: OptionType, underlying: Underlying) -> str | None:
+    def findOption(self, expiry: str, strike: float, option_type: OptionType, underlying: Underlying) -> dict[str, Any] | None:
         instruments = self._instruments.get(underlying, {}).get(option_type, {}).get(str(expiry), [])
         opts = []
         for ins in instruments:
@@ -64,7 +78,7 @@ class Broker:
                 opts.append(ins)
         if not opts:
             return None
-        return instrumentKey(opts[0])
+        return opts[0]
 
     def findOptions(self, expiry: str, option_type: OptionType, underlying: Underlying) -> list[Any]:
         return self._instruments.get(underlying, {}).get(option_type, {}).get(str(expiry), [])
@@ -80,23 +94,27 @@ class Broker:
             return None
         return min(expiries)
     
-    def findStock(self, underlying: Underlying) -> str:
-        return INSTRUMENT_MAP[underlying]
+    def findStock(self, underlying: Underlying) -> dict[str, Any]:
+        return self._stocks[underlying]
     
     def instruments(self):
         # convert nested _instruments to flat array
-        return [
+        insts = [
             ins
             for opt_types in self._instruments.values()
             for expiries in opt_types.values()
             for ins_list in expiries.values()
             for ins in ins_list
         ]
+        insts.extend(self._stocks.values())
+        return insts
+    
     
     def profile(self):
         return self.kite.profile()
         
     def quote(self, *instruments: str):
+        # TODO: make this separate for options and stocks
         return self.kite.quote(instruments)
     
     def history(self, instrument_token: int, from_date: datetime.datetime, to_date: datetime.datetime, interval: Interval = Interval.MINUTE):

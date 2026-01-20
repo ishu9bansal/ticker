@@ -6,7 +6,7 @@ This module contains the business logic for ticker operations.
 
 from datetime import datetime
 from typing import Any
-from app.brokers.zerodha import Broker
+from app.brokers.zerodha import Broker, instrumentKey, instrumentToken
 from app.constants import TZONE_INDIA
 from app.models.ticker import OptionType, Underlying
 from app.utils import timer
@@ -30,7 +30,9 @@ class TickerService:
         if not underlying_str:
             raise ValueError("Underlying parameter is required")
         u = Underlying(underlying_str)
-        return self.broker.quote(self.broker.findStock(u))
+        stock = self.broker.findStock(u)
+        quote = self.broker.quote(instrumentKey(stock))
+        return { u.value: self._combineQuotes(u.value, [quote]) }
     
     @timer
     def history(self, underlying_str: str | None, from_str: str | None, to_str: str | None = None):
@@ -41,11 +43,8 @@ class TickerService:
         from_date = datetime.fromisoformat(from_str)
         to_date = datetime.fromisoformat(to_str) if to_str else datetime.now()
         u = Underlying(underlying_str)
-        token_map = {
-            Underlying.NIFTY: 256265,
-            Underlying.SENSEX: 265,
-        }
-        return self.broker.history(token_map[u], from_date, to_date)
+        token = instrumentToken(self.broker.findStock(u))
+        return self.broker.history(token, from_date, to_date)
 
     @timer
     def straddles(self, underlying_str: str | None):
@@ -109,8 +108,8 @@ class TickerService:
         [underlying, expiry, strike_str] = id.split(':')
         u = Underlying(underlying)
         strike = int(strike_str)
-        call_key = self.broker.findOptionKey(expiry, strike, OptionType.CALL, u)
-        put_key = self.broker.findOptionKey(expiry, strike, OptionType.PUT, u)
-        return call_key, put_key
+        call_opt = self.broker.findOption(expiry, strike, OptionType.CALL, u)
+        put_opt = self.broker.findOption(expiry, strike, OptionType.PUT, u)
+        return instrumentKey(call_opt), instrumentKey(put_opt)
     
 
