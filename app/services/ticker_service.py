@@ -80,6 +80,7 @@ class TickerService:
         parsed = {
             "tstring": tzone_aware_time.isoformat(),
             "timestamp": int(tzone_aware_time.timestamp()*1000),
+            "price": sum(float(record["close"]) for record in records),
             "open": sum(float(record["open"]) for record in records),
             "high": sum(float(record["high"]) for record in records),
             "low": sum(float(record["low"]) for record in records),
