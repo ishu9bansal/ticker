@@ -62,3 +62,14 @@ def history(req: Request):
         return service.history(underlying, from_date, to_date)
     except Exception as e:
         return {"error": str(e)}
+
+@router.get("/straddleHistory")
+def historyStraddle(req: Request):
+    straddleId = req.query_params.get("straddle")
+    from_date = req.query_params.get("from")
+    to_date = req.query_params.get("to")
+    try:
+        return service.straddleHistory(straddleId, from_date, to_date)
+    except Exception as e:
+        return {"error": str(e)}
+

@@ -47,19 +47,45 @@ class TickerService:
         u = Underlying(underlying_str)
         token = instrumentToken(self.broker.findStock(u))
         history = self.broker.history(token, from_date, to_date)
-        return { underlying_str: [self._parseHistoryRecord(record) for record in history] }
+        parsed_records = [self._parseHistoryRecord([record]) for record in history]
+        sorted_records = sorted(parsed_records, key=lambda x: x["timestamp"])
+        return { underlying_str: sorted_records }
     
-    def _parseHistoryRecord(self, record: dict[str, Any]) -> dict[str, Any]:
+    @timer
+    def straddleHistory(self, straddle_id: str | None, from_str: str | None, to_str: str | None = None):
+        if not straddle_id:
+            raise ValueError("straddle parameter is required")
+        if not from_str:
+            raise ValueError("From parameter is required, in datetime format YYYY-MM-DDTHH:mm:ss")
+        call_opt, put_opt = self._straddleInsts(straddle_id)
+        if not call_opt or not put_opt:
+            raise ValueError("Could not find instruments for the given straddle id")
+        call_token, put_token = instrumentToken(call_opt), instrumentToken(put_opt)
+        from_date = datetime.fromisoformat(from_str)
+        to_date = datetime.fromisoformat(to_str) if to_str else datetime.now()
+        call_history = self.broker.history(call_token, from_date, to_date)
+        put_history = self.broker.history(put_token, from_date, to_date)
+        # Combine call and put history by timestamp
+        call_map = {record["date"]: record for record in call_history}
+        put_map = {record["date"]: record for record in put_history}
+        common_timestamps = set(call_map.keys()).intersection(set(put_map.keys()))
+        combined_history = { ts: [call_map[ts], put_map[ts]] for ts in common_timestamps }
+        parsed_records = [self._parseHistoryRecord(records) for records in combined_history.values()]
+        sorted_records = sorted(parsed_records, key=lambda x: x["timestamp"])
+        return { straddle_id: sorted_records }
+    
+    def _parseHistoryRecord(self, records: list[dict[str, Any]]) -> dict[str, Any]:
         # TODO: create a pydantic model for this
-        tzone_aware_time: datetime = record["date"]
+        tzone_aware_time: datetime = records[0]["date"]
         parsed = {
             "tstring": tzone_aware_time.isoformat(),
             "timestamp": int(tzone_aware_time.timestamp()*1000),
-            "open": float(record["open"]),
-            "high": float(record["high"]),
-            "low": float(record["low"]),
-            "close": float(record["close"]),
-            "volume": float(record["volume"]),
+            "open": sum(float(record["open"]) for record in records),
+            "high": sum(float(record["high"]) for record in records),
+            "low": sum(float(record["low"]) for record in records),
+            "close": sum(float(record["close"]) for record in records),
+            "volume": sum(float(record["volume"]) for record in records),
+            "records": records,
         }
         return parsed
 
@@ -95,7 +121,8 @@ class TickerService:
     def straddle_quotes(self, idList: list[str]):
         keys = {}
         for id in idList:
-            call_key, put_key = self._straddleKeys(id)
+            call_opt, put_opt = self._straddleInsts(id)
+            call_key, put_key = instrumentKey(call_opt), instrumentKey(put_opt)
             if not call_key or not put_key:
                 raise ValueError(f"Could not find instruments for straddle id {id}")
             keys[call_key] = id
@@ -122,12 +149,12 @@ class TickerService:
         }
         return combined
     
-    def _straddleKeys(self, id: str):
+    def _straddleInsts(self, id: str):
         [underlying, expiry, strike_str] = id.split(':')
         u = Underlying(underlying)
         strike = int(strike_str)
         call_opt = self.broker.findOption(expiry, strike, OptionType.CALL, u)
         put_opt = self.broker.findOption(expiry, strike, OptionType.PUT, u)
-        return instrumentKey(call_opt), instrumentKey(put_opt)
+        return call_opt, put_opt
     
 
