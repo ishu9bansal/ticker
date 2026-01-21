@@ -47,7 +47,7 @@ class TickerService:
         u = Underlying(underlying_str)
         token = instrumentToken(self.broker.findStock(u))
         history = self.broker.history(token, from_date, to_date)
-        return [self._parseHistoryRecord(record) for record in history]
+        return { underlying_str: [self._parseHistoryRecord(record) for record in history] }
     
     def _parseHistoryRecord(self, record: dict[str, Any]) -> dict[str, Any]:
         # TODO: create a pydantic model for this
