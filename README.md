@@ -398,6 +398,47 @@ uv sync --upgrade
 
 Using curl:
 ```bash
+
+## 🐘 Postgres Integration
+
+The app supports Postgres via SQLAlchemy + psycopg. Configure `.env` with a connection string (already present):
+
+```
+POSTGRES_CONNECTION=postgresql+psycopg://user:password@host:5432/dbname
+```
+
+On startup, the app creates ORM tables and checks DB connectivity. If the DB is unavailable, non-DB routes still load; a warning is logged.
+
+### DB Usage Pattern
+
+- Session dependency: `from app.db import get_db`
+- Base model: `from app.db import Base`
+- Example entity: `app/db/models/price_snapshot.py`
+- Repository pattern: `app/repository/base.py` and `app/repository/price_snapshot_repository.py`
+
+Example usage inside a route or service:
+
+```python
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from app.db import get_db
+from app.db.models import PriceSnapshot
+from app.repository.price_snapshot_repository import PriceSnapshotRepository
+
+def create_snapshot(symbol: str, price: float, db: Session = Depends(get_db)):
+   repo = PriceSnapshotRepository(db)
+   snap = PriceSnapshot(symbol=symbol, price=price)
+   repo.add(snap)
+   db.commit()
+   db.refresh(snap)
+   return snap
+
+def list_recent(symbol: str, limit: int, db: Session = Depends(get_db)):
+   repo = PriceSnapshotRepository(db)
+   return repo.by_symbol(symbol, limit=limit)
+```
+
+Migrations are not included. Consider adding Alembic for schema changes.
 curl http://localhost:8000/
 curl http://localhost:8000/health
 ```

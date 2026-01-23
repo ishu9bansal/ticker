@@ -14,4 +14,7 @@ FRONTEND_URLS = os.getenv("FRONTEND_URLS", "*")
 ALLOWED_ORIGINS = [url.strip() for url in FRONTEND_URLS.split(",")] if FRONTEND_URLS != "*" else ["*"]
 CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY')
 
+# Database
+POSTGRES_CONNECTION = os.getenv("POSTGRES_CONNECTION", "")
+
 TZONE_INDIA = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
