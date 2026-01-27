@@ -15,7 +15,7 @@ class UserTokenRepository(RepositoryBase[UserToken]):
         result = self.session.execute(stmt).scalars().first()
         return result
 
-    @cached()
+    @cached('user_tokens')
     def get_token(self, user_id: str) -> str | None:
         result = self._by_user_id(user_id)
         return result.token if result else None

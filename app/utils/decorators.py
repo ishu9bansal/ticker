@@ -27,12 +27,12 @@ def timer(func):
 
 class KeyValCache:
     def __init__(self):
-        self._cache: dict[str, str] = {}
+        self._cache: dict[str, Any] = {}
 
     def get(self, key: str) -> str | None:
         return self._cache.get(key)
 
-    def set(self, key: str, value: str) -> None:
+    def set(self, key: str, value: Any) -> None:
         self._cache[key] = value
         
     def has(self, key: str) -> bool:
@@ -44,15 +44,22 @@ class KeyValCache:
             cls._instance = cls()
         return cls._instance
 
+CACHE_CONTAINERS: dict[str, KeyValCache] = {}
+def cache_container(name: str) -> KeyValCache:
+    if name not in CACHE_CONTAINERS:
+        CACHE_CONTAINERS[name] = KeyValCache()
+    return CACHE_CONTAINERS[name]
 
-def cached(cache: KeyValCache = KeyValCache.singleton()):
+def cached(cache_key: str):
     """Simple caching decorator for instance methods with a single str argument."""
-    
+    cache = cache_container(cache_key)
     def cached_inner(func: Callable[[Any, str], str | None]):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             if cache.has(args[1]):
+                print(f"[CACHE] Hit for key {args[1]} in cache {cache_key}" )
                 return cache.get(args[1])
+            print(f"[CACHE] Miss for key {args[1]} in cache {cache_key}" )
             result = func(*args, **kwargs)
             if result is not None:
                 cache.set(args[1], result)
