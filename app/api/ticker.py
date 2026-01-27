@@ -12,16 +12,20 @@ from app.db import get_db
 from app.db.models import PriceSnapshot
 from app.models.clerk import ClerkUser
 from app.repository.price_snapshot_repository import PriceSnapshotRepository
+from app.repository.user_token_repository import UserTokenRepository
 from app.services.ticker_service import TickerService
 
 router = APIRouter(dependencies=[Depends(authenticate_request)])
 
-def get_service(user: ClerkUser = Depends(get_user)) -> TickerService:
+def get_service(user: ClerkUser = Depends(get_user), db: Session = Depends(get_db)) -> TickerService:
     user_id = user.sub
     if not user_id:
         raise ValueError("User auth is needed to access TickerService")
-    
-    return TickerService(user_id)
+    repo = UserTokenRepository(db)
+    token = repo.get_token(user_id)
+    if not token:
+        raise ValueError("User token not found in database")
+    return TickerService(token)
 
 @router.get("/instruments")
 def instruments(service: TickerService = Depends(get_service)):

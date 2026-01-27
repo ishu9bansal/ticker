@@ -14,9 +14,8 @@ from app.utils import timer
 
 class TickerService:
     """Service class for ticker-related business logic."""
-    def __init__(self, user_id: str) -> None:
-        self.broker = Broker()
-        self.user_id = user_id
+    def __init__(self, user_token: str) -> None:
+        self.broker = Broker(access_token=user_token)
     
     @timer
     def user(self):
