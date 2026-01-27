@@ -32,28 +32,28 @@ def instruments(service: TickerService = Depends(get_service)):
     try:
         return service.instruments()
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/user")
 def user(service: TickerService = Depends(get_service)):
     try:
         return service.user()
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/quote")
 def quote(underlying: str, service: TickerService = Depends(get_service)):
     try:
         return service.quote(underlying)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/straddles")
 def straddles(underlying: str, service: TickerService = Depends(get_service)):
     try:
         return service.straddles(underlying)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/straddleQuotes")
 def straddleQuotes(ids: str, service: TickerService = Depends(get_service)):
@@ -61,7 +61,7 @@ def straddleQuotes(ids: str, service: TickerService = Depends(get_service)):
     try:
         return service.straddle_quotes(idList)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/history")
 def history(req: Request, service: TickerService = Depends(get_service)):
@@ -71,7 +71,7 @@ def history(req: Request, service: TickerService = Depends(get_service)):
     try:
         return service.history(underlying, from_date, to_date)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/straddleHistory")
 def historyStraddle(req: Request, service: TickerService = Depends(get_service)):
@@ -81,7 +81,7 @@ def historyStraddle(req: Request, service: TickerService = Depends(get_service))
     try:
         return service.straddleHistory(straddleId, from_date, to_date)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # === DB Demo Endpoints ===
@@ -115,7 +115,7 @@ def create_snapshot(symbol: str, price: float, db: Session = Depends(get_db)):
         }
     except Exception as e:
         db.rollback()
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/snapshots/{symbol}")
@@ -144,7 +144,7 @@ def list_snapshots(symbol: str, limit: int = 10, db: Session = Depends(get_db)):
             for snap in snapshots
         ]
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/snapshots")
@@ -172,4 +172,4 @@ def all_snapshots(limit: int = 20, db: Session = Depends(get_db)):
             for snap in snapshots
         ]
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
