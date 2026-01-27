@@ -14,9 +14,11 @@ from app.models.clerk import ClerkUser
 from app.repository.price_snapshot_repository import PriceSnapshotRepository
 from app.repository.user_token_repository import UserTokenRepository
 from app.services.ticker_service import TickerService
+from app.utils import timer
 
 router = APIRouter(dependencies=[Depends(authenticate_request)])
 
+@timer
 def get_service(user: ClerkUser = Depends(get_user), db: Session = Depends(get_db)) -> TickerService:
     user_id = user.sub
     if not user_id:

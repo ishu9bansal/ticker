@@ -6,7 +6,8 @@ All routes from different routers are included here.
 """
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+import time
+from fastapi import FastAPI, Request, logger
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import health, ticker, zerodha
 from app.constants.index import ALLOWED_ORIGINS
@@ -49,6 +50,26 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
+
+WARNING_THRESHOLD = 2.0  # 2 second
+ERROR_THRESHOLD = 4.0    # 4 seconds
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    """
+    Middleware to time API requests and add the duration to a response header.
+    """
+    start_time = time.perf_counter()  # Use perf_counter for better precision
+    response = await call_next(request)
+    process_time = time.perf_counter() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    msg = f"Request processed in {process_time:.4f} seconds"
+    if process_time > ERROR_THRESHOLD:
+        logger.logger.error(msg)
+    elif process_time > WARNING_THRESHOLD:
+        logger.logger.warning(msg)
+    else:
+        logger.logger.info(msg) # Log the time
+    return response
 
 # Include routers from different modules
 app.include_router(health.router, tags=["health"])
