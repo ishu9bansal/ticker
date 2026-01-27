@@ -50,12 +50,12 @@ def cached(cache: KeyValCache = KeyValCache.singleton()):
     
     def cached_inner(func: Callable[[Any, str], str | None]):
         @functools.wraps(func)
-        def wrapper(self, arg: str):
-            if cache.has(arg):
-                return cache.get(arg)
-            result = func(self, arg)
+        def wrapper(*args, **kwargs):
+            if cache.has(args[1]):
+                return cache.get(args[1])
+            result = func(*args, **kwargs)
             if result is not None:
-                cache.set(arg, result)
+                cache.set(args[1], result)
             return result
         return wrapper
     return cached_inner
