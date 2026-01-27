@@ -1,1 +1,1 @@
-from .timer import *
+from .decorators import *
