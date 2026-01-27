@@ -4,7 +4,7 @@ Ticker-related endpoints.
 Business logic endpoints for ticker functionality.
 """
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.api.auth import authenticate_request, get_user
@@ -20,11 +20,11 @@ router = APIRouter(dependencies=[Depends(authenticate_request)])
 def get_service(user: ClerkUser = Depends(get_user), db: Session = Depends(get_db)) -> TickerService:
     user_id = user.sub
     if not user_id:
-        raise ValueError("User auth is needed to access TickerService")
+        raise HTTPException(status_code=400, detail="User auth is needed to access TickerService")
     repo = UserTokenRepository(db)
     token = repo.get_token(user_id)
     if not token:
-        raise ValueError("User token not found in database")
+        raise HTTPException(status_code=400, detail="User token not found in database")
     return TickerService(token)
 
 @router.get("/instruments")
