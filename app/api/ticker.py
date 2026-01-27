@@ -4,55 +4,55 @@ Ticker-related endpoints.
 Business logic endpoints for ticker functionality.
 """
 
-from datetime import datetime
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from app.api.auth import authenticate_request
+from app.api.auth import authenticate_request, get_user
 from app.db import get_db
 from app.db.models import PriceSnapshot
+from app.models.clerk import ClerkUser
 from app.repository.price_snapshot_repository import PriceSnapshotRepository
 from app.services.ticker_service import TickerService
 
 router = APIRouter(dependencies=[Depends(authenticate_request)])
-service = TickerService()
+
+def get_service(user: ClerkUser = Depends(get_user)) -> TickerService:
+    user_id = user.sub
+    if not user_id:
+        raise ValueError("User auth is needed to access TickerService")
+    
+    return TickerService(user_id)
 
 @router.get("/instruments")
-def instruments():
+def instruments(service: TickerService = Depends(get_service)):
     try:
         return service.instruments()
     except Exception as e:
         return {"error": str(e)}
 
 @router.get("/user")
-def user():
+def user(service: TickerService = Depends(get_service)):
     try:
         return service.user()
     except Exception as e:
         return {"error": str(e)}
 
 @router.get("/quote")
-def quote(req: Request):
-    # parse query params
-    underlying = req.query_params.get("underlying")
+def quote(underlying: str, service: TickerService = Depends(get_service)):
     try:
         return service.quote(underlying)
     except Exception as e:
         return {"error": str(e)}
 
 @router.get("/straddles")
-def straddles(req: Request):
-    # parse query params
-    underlying = req.query_params.get("underlying")
+def straddles(underlying: str, service: TickerService = Depends(get_service)):
     try:
         return service.straddles(underlying)
     except Exception as e:
         return {"error": str(e)}
 
 @router.get("/straddleQuotes")
-def straddleQuotes(req: Request):
-    # parse query params
-    ids = req.query_params.get("ids")
+def straddleQuotes(ids: str, service: TickerService = Depends(get_service)):
     idList = ids.split(",") if ids else []
     try:
         return service.straddle_quotes(idList)
@@ -60,7 +60,7 @@ def straddleQuotes(req: Request):
         return {"error": str(e)}
 
 @router.get("/history")
-def history(req: Request):
+def history(req: Request, service: TickerService = Depends(get_service)):
     underlying = req.query_params.get("underlying")
     from_date = req.query_params.get("from")
     to_date = req.query_params.get("to")
@@ -70,7 +70,7 @@ def history(req: Request):
         return {"error": str(e)}
 
 @router.get("/straddleHistory")
-def historyStraddle(req: Request):
+def historyStraddle(req: Request, service: TickerService = Depends(get_service)):
     straddleId = req.query_params.get("straddle")
     from_date = req.query_params.get("from")
     to_date = req.query_params.get("to")
