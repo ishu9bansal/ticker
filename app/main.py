@@ -8,7 +8,7 @@ All routes from different routers are included here.
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import health, ticker
+from app.api import health, ticker, zerodha
 from app.constants.index import ALLOWED_ORIGINS
 from app.db import Base, engine, SessionLocal
 from sqlalchemy import text
@@ -53,6 +53,7 @@ app.add_middleware(
 # Include routers from different modules
 app.include_router(health.router, tags=["health"])
 app.include_router(ticker.router, prefix='/ticker', tags=["ticker"])
+app.include_router(zerodha.router, prefix='/zerodha', tags=["zerodha"])
 
 
 @app.get("/")
