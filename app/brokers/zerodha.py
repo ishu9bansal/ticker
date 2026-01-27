@@ -40,14 +40,14 @@ class Broker:
     @timer
     def __init__(self, api_key: str = ZERODHA_API_KEY, access_token: str = USER_ACCESS_TOKEN):
         self.kite = KiteConnect(api_key=api_key, access_token=access_token)
-        instruments = self.__instruments_init("cache_key")
-        self._preprocessInstruments(instruments)
+        self._instruments, self._stocks = self.__instruments_init("cache_key")
     
     @cached('zerodha_instruments')
     def __instruments_init(self, _: str):
-        return self.kite.instruments()
+        instruments = self.kite.instruments()
+        return self._preprocessInstruments(instruments)
     
-    def _preprocessInstruments(self, allInstruments) -> None:
+    def _preprocessInstruments(self, allInstruments):
         # Filter only supported underlyings
         supportedUnderlyings = {u.value for u in Underlying}
         
@@ -60,22 +60,26 @@ class Broker:
         def filterStocks(ins: dict[str, str]) -> bool:
             return ins.get("tradingsymbol") in TRADING_SYMBOL
         
+        instruments = {}
         option_instruments = [ins for ins in allInstruments if filterOptions(ins)]
         for ins in option_instruments:
             underlying = Underlying(ins.get("name"))
             optionType = OptionType(ins.get("instrument_type"))
             expiry = str(ins.get("expiry"))
-            if underlying not in self._instruments:
-                self._instruments[underlying] = {}
-            if optionType not in self._instruments[underlying]:
-                self._instruments[underlying][optionType] = {}
-            if expiry not in self._instruments[underlying][optionType]:
-                self._instruments[underlying][optionType][expiry] = []
-            self._instruments[underlying][optionType][expiry].append(ins)
+            if underlying not in instruments:
+                instruments[underlying] = {}
+            if optionType not in instruments[underlying]:
+                instruments[underlying][optionType] = {}
+            if expiry not in instruments[underlying][optionType]:
+                instruments[underlying][optionType][expiry] = []
+            instruments[underlying][optionType][expiry].append(ins)
         
+        stocks = {}
         stock_instruments = [ins for ins in allInstruments if filterStocks(ins)]
         for ins in stock_instruments:
-            self._stocks[TRADING_SYMBOL[ins.get("tradingsymbol")]] = ins
+            stocks[TRADING_SYMBOL[ins.get("tradingsymbol")]] = ins
+        
+        return instruments, stocks
     
     def findOption(self, expiry: str, strike: float, option_type: OptionType, underlying: Underlying) -> dict[str, Any] | None:
         instruments = self._instruments.get(underlying, {}).get(option_type, {}).get(str(expiry), [])
