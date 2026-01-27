@@ -7,6 +7,7 @@ from kiteconnect import KiteConnect
 
 from app.constants import USER_ACCESS_TOKEN, ZERODHA_API_KEY
 from app.models.ticker import OptionType, Underlying
+from app.utils import cached, timer
 
 TRADING_SYMBOL = {
     "NIFTY 50": Underlying.NIFTY,
@@ -35,10 +36,16 @@ def instrumentToken(instrument: dict[str,Any]) -> int:
 class Broker:
     _instruments: dict[Underlying, dict[OptionType, dict[str, list[dict[str, Any]]]]] = {}
     _stocks: dict[Underlying, dict[str, Any]] = {}
+    
+    @timer
     def __init__(self, api_key: str = ZERODHA_API_KEY, access_token: str = USER_ACCESS_TOKEN):
         self.kite = KiteConnect(api_key=api_key, access_token=access_token)
-        instruments = self.kite.instruments()
+        instruments = self.__instruments_init("cache_key")
         self._preprocessInstruments(instruments)
+    
+    @cached('zerodha_instruments')
+    def __instruments_init(self, _: str):
+        return self.kite.instruments()
     
     def _preprocessInstruments(self, allInstruments) -> None:
         # Filter only supported underlyings
@@ -109,13 +116,15 @@ class Broker:
         insts.extend(self._stocks.values())
         return insts
     
-    
+    @timer
     def profile(self):
         return self.kite.profile()
         
+    @timer
     def quote(self, *instruments: str):
         # TODO: make this separate for options and stocks
         return self.kite.quote(instruments)
     
+    @timer
     def history(self, instrument_token: int, from_date: datetime.datetime, to_date: datetime.datetime, interval: Interval = Interval.MINUTE):
         return self.kite.historical_data(instrument_token, from_date, to_date, interval.value)

@@ -29,7 +29,7 @@ class KeyValCache:
     def __init__(self):
         self._cache: dict[str, Any] = {}
 
-    def get(self, key: str) -> str | None:
+    def get(self, key: str) -> Any:
         return self._cache.get(key)
 
     def set(self, key: str, value: Any) -> None:
@@ -53,7 +53,7 @@ def cache_container(name: str) -> KeyValCache:
 def cached(cache_key: str):
     """Simple caching decorator for instance methods with a single str argument."""
     cache = cache_container(cache_key)
-    def cached_inner(func: Callable[[Any, str], str | None]):
+    def cached_inner(func: Callable[[Any, str], Any]):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             if cache.has(args[1]):

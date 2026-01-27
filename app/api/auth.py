@@ -4,6 +4,7 @@ from clerk_backend_api.security.types import AuthenticateRequestOptions
 
 from app.constants.index import ALLOWED_ORIGINS, CLERK_SECRET_KEY
 from app.models.clerk import ClerkUser
+from app.utils import timer
 
 def get_request_state(request: Request):
     sdk = Clerk(bearer_auth=CLERK_SECRET_KEY)
@@ -22,6 +23,7 @@ def authenticate_request(request: Request):
         raise HTTPException(status_code=401, detail="Unauthorized")
     return request
 
+@timer
 def get_user(request: Request):
     request_state = get_request_state(request)
     if not request_state.is_signed_in or not request_state.payload:
