@@ -2,10 +2,14 @@
 from typing import Any
 
 from kiteconnect import KiteConnect
-from app.brokers.zerodha import TRADING_SYMBOL
 from app.constants import ZERODHA_API_KEY
 from app.models.ticker import OptionType, Underlying
 from app.utils.decorators import timer
+
+TRADING_SYMBOL = {
+    "NIFTY 50": Underlying.NIFTY,
+    "SENSEX": Underlying.SENSEX,
+}
 
 
 class InstrumentStore:

@@ -10,11 +10,6 @@ from app.constants import USER_ACCESS_TOKEN, ZERODHA_API_KEY
 from app.models.ticker import OptionType, Underlying
 from app.utils import timer
 
-TRADING_SYMBOL = {
-    "NIFTY 50": Underlying.NIFTY,
-    "SENSEX": Underlying.SENSEX,
-}
-
 class Interval(Enum):
     MINUTE = 'minute'
     DAY = 'day'
