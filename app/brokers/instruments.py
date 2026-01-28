@@ -37,6 +37,7 @@ class InstrumentStore:
             cls._instance = cls()
         return cls._instance
     
+    @timer
     def load(self):
         kite = KiteConnect(api_key=self.api_key)
         instruments = kite.instruments()

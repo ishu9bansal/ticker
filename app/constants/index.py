@@ -18,3 +18,5 @@ CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY')
 POSTGRES_CONNECTION = os.getenv("POSTGRES_CONNECTION", "")
 
 TZONE_INDIA = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+
+TIMER_THRESHOLD = int(os.getenv("TIMER_THRESHOLD", "2"))

@@ -5,7 +5,9 @@ from typing import Any, Callable, Self
 
 from fastapi.logger import logger
 
-THRESHOLD_WARNING = 2  # 2 seconds
+from app.constants import TIMER_THRESHOLD
+
+THRESHOLD_WARNING = TIMER_THRESHOLD
 THRESHOLD_ERROR = 4  # 4 seconds
 def timer(func):
     @functools.wraps(func)
