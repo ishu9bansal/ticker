@@ -47,6 +47,7 @@ class Broker:
         instruments = self.kite.instruments()
         return self._preprocessInstruments(instruments)
     
+    @timer
     def _preprocessInstruments(self, allInstruments):
         # Filter only supported underlyings
         supportedUnderlyings = {u.value for u in Underlying}
