@@ -23,7 +23,7 @@ class TickerService:
     
     @timer
     def instruments(self):
-        return self.broker.instruments()
+        return self.broker.instruments(True)
     
     @timer
     def quote(self, underlying_str: str | None):

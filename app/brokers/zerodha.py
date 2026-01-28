@@ -63,7 +63,9 @@ class Broker:
     def findStock(self, underlying: Underlying) -> dict[str, Any]:
         return INSTRUMENT_STORE.stocks()[underlying]
     
-    def instruments(self):
+    def instruments(self, force_reload: bool = False) -> list[dict[str, Any]]:
+        if force_reload:
+            INSTRUMENT_STORE.load()
         instruments = INSTRUMENT_STORE.instruments()
         stocks = INSTRUMENT_STORE.stocks()
         # convert nested _instruments to flat array
