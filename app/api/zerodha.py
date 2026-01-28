@@ -44,10 +44,10 @@ def getLoginUrl():
 def login(request_token: str, db: Session = Depends(get_db), user_id: str = Depends(get_user_id)):
     try:
         data = kite.generate_session(request_token=request_token, api_secret=ZERODHA_API_SECRET)
-        if not data and not data["access_token"]:
+        if not data and not data["access_token"]:   # type: ignore
             print(data)
             raise HTTPException(status_code=400, detail="Failed to generate session with provided request token")
-        access_token: str = data["access_token"]
+        access_token: str = data["access_token"]    # type: ignore
         repo = UserTokenRepository(db)
         repo.update_token(user_id, access_token)
         return {"message": "Logged in successfully"}
