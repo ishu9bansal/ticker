@@ -22,8 +22,8 @@ class TickerService:
         return self.broker.profile()
     
     @timer
-    def instruments(self):
-        return self.broker.instruments(True)
+    def instruments(self, force_reload: bool = False):
+        return self.broker.instruments(force_reload)
     
     @timer
     def quote(self, underlying_str: str | None):

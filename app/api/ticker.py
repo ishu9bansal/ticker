@@ -36,6 +36,13 @@ def instruments(service: TickerService = Depends(get_service)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/reload_instruments")
+def reloadinstruments(service: TickerService = Depends(get_service)):
+    try:
+        return service.instruments(True)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/user")
 def user(service: TickerService = Depends(get_service)):
     try:
